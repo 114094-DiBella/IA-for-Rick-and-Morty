@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - ENVIRONMENT=production
+      - MODEL_NAME=command-r7b-12-2024
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - chromadb
+
+  chromadb:
+    image: chromadb/chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  chroma_data:
