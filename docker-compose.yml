@@ -7,12 +7,24 @@ services:
       - "8000:8000"
     environment:
       - COHERE_API_KEY=${COHERE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - ENVIRONMENT=production
       - MODEL_NAME=command-r7b-12-2024
+      - CHROMA_SERVER_HOST=chromadb
+      - CHROMA_SERVER_PORT=8000
     volumes:
       - ./src:/app/src
     depends_on:
-      - chromadb
+      chromadb:
+        condition: service_healthy
+    networks:
+      - rick_morty_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   chromadb:
     image: chromadb/chroma
@@ -20,6 +32,35 @@ services:
       - "8001:8000"
     volumes:
       - chroma_data:/chroma/chroma
+    networks:
+      - rick_morty_net
+    environment:
+      - ALLOW_RESET=True
+      - ANONYMIZED_TELEMETRY=False
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    image: node:18-alpine
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    command: npm start
+    networks:
+      - rick_morty_net
+    depends_on:
+      - app
+
+networks:
+  rick_morty_net:
+    driver: bridge
 
 volumes:
   chroma_data:
+    driver: local
