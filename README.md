@@ -182,9 +182,9 @@ pytest
 5. Abrir un Pull Request
 
 ## 👥 Autores
-- Agustin Di Bella (@114094_DiBella)
+- Agustin Di Bella (@114094-DiBella)
 
 
 ## 📞 Contacto
 - Email: aguss.dibella777@gmail.com
-- GitHub: @114094_DiBella
+- GitHub: @114094-DiBella

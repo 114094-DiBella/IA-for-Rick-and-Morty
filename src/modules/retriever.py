@@ -70,34 +70,6 @@ class Retriever:
                 print(f"Error añadiendo lote: {str(e)}")
                 raise
 
-    def search(self, query: str, n_results: int = 5):
-        """
-        Performs semantic search in the vector database.
-        
-        @param query: Search query text
-        @type query: str
-        @param n_results: Number of results to return
-        @type n_results: int
-        @return: Dictionary containing search results and metadata
-        @rtype: Dict
-        """
-        try:
-            print(f"\nBuscando: {query}")
-            results = self.collection.query(
-                query_texts=[query],
-                n_results=n_results,
-                include_embeddings=False  # Evitar duplicados
-            )
-            if not results['documents'][0]:
-                print("No se encontraron resultados relevantes")
-                return {"documents": [[]], "metadatas": [[]]}
-        
-            print(f"Resultados encontrados: {len(results['documents'][0])}")
-            return results
-        except Exception as e:
-            print(f"Error en búsqueda: {str(e)}")
-            return {"documents": [[]], "metadatas": [[]]}
-
     def count_documents(self):
         """
         Returns the total number of documents in the collection.
@@ -119,3 +91,65 @@ class Retriever:
         except Exception as e:
             print(f"Error obteniendo documentos: {str(e)}")
             return None
+            
+    def search(self, query: str, n_results: int = 5):
+        """
+        Performs semantic search in the vector database.
+        """
+        try:
+            # Detectar si la consulta es sobre una temporada específica
+            import re
+            season_match = re.search(r'temporada (\d+)', query.lower())
+            season = f"S{int(season_match.group(1)):02d}" if season_match else None
+
+            # Búsqueda de episodios
+            if season:
+                episode_results = self.collection.query(
+                    query_texts=[query],
+                    n_results=n_results,
+                    where={
+                        "$and": [
+                            {"type": "episode"},
+                            {"season": season}
+                        ]
+                    }
+                )
+            else:
+                episode_results = self.collection.query(
+                    query_texts=[query],
+                    n_results=n_results,
+                    where={"type": "episode"}
+                )
+            
+            # Búsqueda de personajes relevantes
+            character_results = self.collection.query(
+                query_texts=[query],
+                n_results=3,
+                where={"type": "character"}
+            )
+            
+            # Combinar resultados
+            combined_docs = []
+            combined_meta = []
+            
+            if episode_results['documents'][0]:
+                combined_docs.extend(episode_results['documents'][0])
+                combined_meta.extend(episode_results['metadatas'][0])
+                
+            if character_results['documents'][0]:
+                combined_docs.extend(character_results['documents'][0])
+                combined_meta.extend(character_results['metadatas'][0])
+                
+            if not combined_docs:
+                print("No se encontraron resultados relevantes")
+                return {"documents": [[]], "metadatas": [[]]}
+                
+            print(f"Total resultados encontrados: {len(combined_docs)}")
+            return {
+                "documents": [combined_docs],
+                "metadatas": [combined_meta]
+            }
+                
+        except Exception as e:
+            print(f"Error en búsqueda: {str(e)}")
+            return {"documents": [[]], "metadatas": [[]]}

@@ -51,7 +51,7 @@ class Generator:
                 stop_sequences=[],
                 return_likelihoods="NONE"
             )
-            
+            #response = self._validate_groundedness(generated_response=response.generations[0].text)
             print(f"Respuesta: {response.generations[0].text}")
             return response.generations[0].text
                 
@@ -61,69 +61,78 @@ class Generator:
         
     def _prepare_prompt(self, query: str, context: List[Dict], language: str) -> str:
         """
-        Prepares the prompt for the language model with context and personality.
-        
-        @param query: User's question
-        @type query: str
-        @param context: Relevant context information
-        @type context: List[Dict]
-        @param language: Detected language of the query
-        @type language: str
-        @return: Formatted prompt for the model
-        @rtype: str
+        Prepares the prompt with better context processing and instructions.
         """
-        # Procesar el contexto de manera más estructurada
-        character_info = []
+        # Separar y formatear episodios y personajes
         episode_info = []
+        character_info = []
         
         for item in context:
-            if item['metadata']['type'] == 'character':
+            if item['metadata']['type'] == 'episode':
+                # Formatear información de episodios
+                episode_text = (
+                    f"Episodio '{item['metadata'].get('name')}' "
+                    f"({item['metadata'].get('episode_code')}) "
+                    f"emitido el {item['metadata'].get('air_date')}\n"
+                    f"Resumen: {item['content']}"
+                )
+                episode_info.append(episode_text)
+            elif item['metadata']['type'] == 'character':
+                # Formatear información de personajes
                 character_info.append(item['content'])
-            elif item['metadata']['type'] == 'episode':
-                episode_info.append(item['content'])
-        
-        context_text = "Personajes:" + " ".join(character_info)
+
+        # Construir contexto estructurado
+        context_parts = []
         if episode_info:
-            context_text += "Episodios:" + " ".join(episode_info)
+            context_parts.append("EPISODIOS:\n" + "\n".join(episode_info))
+        if character_info:
+            context_parts.append("PERSONAJES:\n" + "\n".join(character_info))
+        
+        context_text = "\n\n".join(context_parts)
+
         if language == 'es':
             prompt = f"""
-            Sistema: Eres Rick Sanchez (C-137) y tu tarea es responder a las preguntas de Morty.
-            REGLAS ESTRICTAS:
-            1. SOLO USA la información del contexto. Si no tienes información, di "Morty, esa información está clasificada" o similar
-            2. NO INVENTES nada que no esté en el contexto
-            3. Se sarcástico y usa el estilo de Rick:
-            - Usa *eructo* ocasionalmente
-            - Di "Morty" frecuentemente
-            - Usa "Wubba Lubba Dub Dub" ocasionalmente
-            4. SIEMPRE responde en español
+            Sistema: Eres Rick Sanchez (C-137) respondiendo preguntas.
+            
+              REGLAS ESTRICTAS (CRÍTICAS):
+            1. SOLO USA la información del contexto proporcionado. NUNCA inventes información.
+            2. Si la información no está en el contexto, di EXACTAMENTE: "Morty, esa información está clasificada" y NO AGREGUES MÁS INFORMACIÓN.
+            3. NO menciones series, películas o contenido que no esté en el contexto.
+            4. Cuando hables de episodios, menciona SOLO los que aparecen en el contexto.
+            5. Mantén el estilo de Rick pero SIN INVENTAR DETALLES ADICIONALES.
+            6. SIEMPRE responde en español.
             
             CONTEXTO DISPONIBLE:
             {context_text}
             
             PREGUNTA: {query}
             
-            RICK (responde SOLO con la información disponible y sé honesto si falta información):
+            (responde USANDO SOLO la información del contexto):
             """
         else:
+            # Similar structure for English...
             prompt = f"""
-            You are Rick Sanchez answering questions. IMPORTANT:
-            1. ONLY use information provided in the context
-            2. DO NOT make up information not in the context
-            3. If there isn't enough information, say so
-            4. Answer in ENGLISH
-            5. Use Rick's style:
-               - Say "Morty" frequently
-               - Be sarcastic
-               - Use "Wubba Lubba Dub Dub" occasionally
-               - Reference science
-               - Make alcohol references
+            You are Rick Sanchez answering questions.
             
-            Context about Rick and Morty:
+            STRICT RULES:
+            1. ONLY use information from the provided context. DO NOT make up information.
+            2. If information isn't in the context, say it's classified.
+            3. DO NOT mention websites, wikis, or external sources.
+            4. Be specific with dates and episode numbers when available.
+            5. Maintain Rick's style:
+            - Say "Morty" frequently
+            - Be sarcastic
+            - Use *burp* occasionally
+            - Use "Wubba Lubba Dub Dub" occasionally
+            6. Answer in ENGLISH
+            
+            AVAILABLE CONTEXT:
             {context_text}
             
-            *Burp* Listen up Morty, here's the answer to: {query}
+            QUESTION: {query}
             
-            Answer (only using context information):
+            RICK (answer using ONLY the context information):
             """
+        
         print(prompt)
-        return prompt
+        return prompt    

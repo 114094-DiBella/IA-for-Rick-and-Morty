@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """
     COHERE_API_KEY: str
     ENVIRONMENT: str = "development"
-    MODEL_NAME: str = "command-r7b-12-2024"
+    MODEL_NAME: str = "command-r-plus-04-2024"
 
     model_config = SettingsConfigDict(
         env_file='.env',
