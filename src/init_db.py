@@ -1,6 +1,6 @@
 import asyncio
-from modules.rick_morty_api import RickMortyAPI
-from modules.retriever import Retriever
+from src.modules.rick_morty_api import RickMortyAPI
+from src.modules.retriever import Retriever
 
 async def init_database():
     print("Iniciando carga de datos...")

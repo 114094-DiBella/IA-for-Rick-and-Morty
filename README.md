@@ -125,7 +125,7 @@ print(response.json())
    ```bash
    # Este paso es OBLIGATORIO antes de iniciar el servidor
    # Consume la API de Rick & Morty e inicializa ChromaDB
-   python src/init_db.py
+   python -m src.init_db
    ```
 
 3. Iniciar el servidor:

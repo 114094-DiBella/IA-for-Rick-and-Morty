@@ -40,30 +40,7 @@ DB_COUNT=$(cat /tmp/db_count)
 # Inicializar la base de datos si está vacía
 if [ "$DB_COUNT" -eq "0" ]; then
     echo "Inicializando base de datos..."
-    python -c "
-import asyncio
-from src.modules.rick_morty_api import RickMortyAPI
-from src.modules.retriever import Retriever
-
-async def init_database():
-    print('Iniciando carga de datos...')
-    api = RickMortyAPI()
-    retriever = Retriever()
-    
-    print('Obteniendo datos de la API...')
-    data = await api.fetch_all_data()
-    
-    print('Procesando datos...')
-    documents = api.process_data_for_embedding(data)
-    
-    print('Cargando en ChromaDB...')
-    retriever.add_documents(documents)
-    
-    count = retriever.count_documents()
-    print(f'Total documentos cargados: {count}')
-
-asyncio.run(init_database())
-"
+    python -m src.init_db
     echo "¡Base de datos inicializada correctamente!"
 else
     echo "La base de datos ya está inicializada con $DB_COUNT documentos."
