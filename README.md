@@ -65,6 +65,9 @@ langdetect
 ```
 rick_morty_rag/
 ├── src/
+│   ├──data/
+│   │   ├── raw/
+│   │   │    ├── Episodios   # Episodios transcriptos          
 │   ├── api/
 │   │   ├── main.py          # Endpoints FastAPI
 │   │   └── models.py        # Modelos Pydantic
@@ -168,16 +171,33 @@ pytest
 2. **Augmentación**: Enriquecimiento del contexto con información adicional
 3. **Generación**: Creación de respuestas coherentes y precisas
 
-## 🛠️ Tecnologías Utilizadas
-- FastAPI: Framework web
-- LangChain: Orquestación de LLMs
-- ChromaDB: Base de datos vectorial
+## 🛠️ Tecnologías Utilizadas  
 
-## Preguntas al LLM
+1. **FastAPI**  
+   - Framework web moderno, rápido y de alto rendimiento basado en Python. Se utilizó para construir las APIs necesarias para el chatbot y manejar las solicitudes del usuario.  
+
+2. **ChromaDB**  
+   - Base de datos vectorial utilizada para gestionar datos semánticos, como embeddings generados para proporcionar respuestas inteligentes basadas en la similitud contextual.  
+
+3. **Docker**  
+   - Plataforma de contenedores que facilita la creación, despliegue y ejecución de aplicaciones en un entorno aislado. Se usó para empaquetar y desplegar los componentes del proyecto.  
+
+4. **GitHub**  
+   - Sistema de control de versiones y colaboración utilizado para alojar el código del proyecto, realizar seguimiento de cambios y colaborar en equipo.  
+
+5. **Cohere**  
+   - Plataforma de procesamiento de lenguaje natural (NLP) que se empleó para generar embeddings o mejorar las capacidades de procesamiento del lenguaje del chatbot.  
+
+6. **API de Rick y Morty**  
+   - API pública que proporciona información detallada sobre los personajes, episodios y ubicaciones de la serie *Rick y Morty*. Se integró para enriquecer las respuestas del chatbot con datos relevantes del universo de la serie.  
+
+## Preguntas
 - "¿De qué trata el episodio donde Rick se convierte en un pepinillo?, es el episodio Picke Rick"
-- "¿quien es Rick Sanchez?"
+- "¿Quien es Rick Sanchez?"
 - "Rick... ¿qué es un Plumbus?"
 - Rick, ¿cómo hiciste para que los Perros no conquistaran el mundo?    
+- ¿Que sucede en el capitulo Piloto?
+- ¿A que dimension perteneces rick?
 
 ## 🤝 Contribución
 1. Fork el proyecto
