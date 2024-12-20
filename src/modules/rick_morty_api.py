@@ -46,7 +46,7 @@ class RickMortyAPI:
             
         return results
 
-    def process_data_for_embedding(self, data: Dict) -> List[Dict]:
+    def process_data_for_embedding(self, data: Dict, transcriptions: Dict[str, str]) -> List[Dict]: 
         """
         Procesa los datos de la API para ser insertados en ChromaDB.
         
@@ -107,6 +107,10 @@ class RickMortyAPI:
             season = episode_code[:3]  # "S01"
             episode_num = episode_code[3:]  # "E01"
             
+            # Obtener transcripción del episodio
+            transcription = transcriptions.get(ep['name'], "Transcription not available")
+            description += f"\nTranscription:\n{transcription[:500]}..."
+
             # Construir descripción detallada del episodio
             description = (
                 f"Episode Information:\n"
@@ -131,7 +135,9 @@ class RickMortyAPI:
                     'episode_code': ep['episode'],
                     'air_date': ep['air_date'],
                     'season': season,
-                    'episode_num': episode_num
+                    'episode_num': episode_num,
+                    'has_transcript': ep['name'] in transcriptions
+
                 }
             }
             documents.append(doc)

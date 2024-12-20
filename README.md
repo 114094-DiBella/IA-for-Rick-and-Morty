@@ -173,6 +173,11 @@ pytest
 - LangChain: Orquestación de LLMs
 - ChromaDB: Base de datos vectorial
 
+## Preguntas al LLM
+- "¿De qué trata el episodio donde Rick se convierte en un pepinillo?, es el episodio Picke Rick"
+- "¿quien es Rick Sanchez?"
+- "Rick... ¿qué es un Plumbus?"
+- Rick, ¿cómo hiciste para que los Perros no conquistaran el mundo?    
 
 ## 🤝 Contribución
 1. Fork el proyecto

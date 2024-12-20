@@ -6,7 +6,7 @@ class DataLoader:
     """
     Handles loading of Rick & Morty data from JSON files.
     """
-    def __init__(self, data_dir: str = "src/data/raw"):
+    def __init__(self, data_dir: str = "src/data/raw", transcripts_dir: str = "src/data/raw"):
         """
         Initializes the DataLoader with the specified data directory.
         
@@ -14,6 +14,7 @@ class DataLoader:
         @type data_dir: str
         """
         self.data_dir = data_dir
+        self.transcripts_dir = transcripts_dir
 
     def load_episodes(self) -> List[Dict]:
         """
@@ -56,3 +57,19 @@ class DataLoader:
             "episodes": self.load_episodes(),
             "characters": self.load_characters()
         }
+    
+    
+    def load_transcripts(self) -> Dict[str, str]:
+        """
+        Carga las transcripciones de los episodios desde los archivos de texto.
+        
+        @return: Diccionario con nombres de episodios como claves y transcripciones como valores
+        @rtype: Dict[str, str]
+        """
+        transcripts = {}
+        for filename in os.listdir(self.transcripts_dir):
+            if filename.endswith(".txt"):
+                episode_name = os.path.splitext(filename)[0]
+                with open(os.path.join(self.transcripts_dir, filename), "r", encoding="utf-8") as f:
+                    transcripts[episode_name] = f.read()
+        return transcripts

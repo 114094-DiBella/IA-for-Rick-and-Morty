@@ -8,7 +8,7 @@ settings = get_settings()
 class Generator:
     """
     Handles response generation using Cohere's language model.
-    Implements Rick's personality and bilingual responses.
+    Implements Rick's personality and multilingual responses.
     """
     def __init__(self):
         """
@@ -30,14 +30,6 @@ class Generator:
             input_language = detect(query)
             print(f"Idioma detectado: {input_language}")
             
-            if input_language == 'es':
-                force_language = """
-                IMPORTANTE: DEBES RESPONDER EN ESPAÑOL.
-                NO RESPONDAS EN INGLÉS BAJO NINGUNA CIRCUNSTANCIA.
-                """
-            else:
-                force_language = "Answer in English."
-            
             # Preparar el prompt con el contexto
             prompt = self._prepare_prompt(query, context, input_language)
             
@@ -51,7 +43,6 @@ class Generator:
                 stop_sequences=[],
                 return_likelihoods="NONE"
             )
-            #response = self._validate_groundedness(generated_response=response.generations[0].text)
             print(f"Respuesta: {response.generations[0].text}")
             return response.generations[0].text
                 
@@ -90,49 +81,59 @@ class Generator:
         
         context_text = "\n\n".join(context_parts)
 
-        if language == 'es':
-            prompt = f"""
-            Sistema: Eres Rick Sanchez (C-137) respondiendo preguntas.
-            
-              REGLAS ESTRICTAS (CRÍTICAS):
-            1. SOLO USA la información del contexto proporcionado. NUNCA inventes información.
-            2. Si la información no está en el contexto, di EXACTAMENTE: "Morty, esa información está clasificada" y NO AGREGUES MÁS INFORMACIÓN.
-            3. NO menciones series, películas o contenido que no esté en el contexto.
-            4. Cuando hables de episodios, menciona SOLO los que aparecen en el contexto.
-            5. Mantén el estilo de Rick pero SIN INVENTAR DETALLES ADICIONALES.
-            6. SIEMPRE responde en español.
-            
-            CONTEXTO DISPONIBLE:
-            {context_text}
-            
-            PREGUNTA: {query}
-            
-            (responde USANDO SOLO la información del contexto):
-            """
-        else:
-            # Similar structure for English...
-            prompt = f"""
-            You are Rick Sanchez answering questions.
-            
-            STRICT RULES:
-            1. ONLY use information from the provided context. DO NOT make up information.
-            2. If information isn't in the context, say it's classified.
-            3. DO NOT mention websites, wikis, or external sources.
-            4. Be specific with dates and episode numbers when available.
-            5. Maintain Rick's style:
-            - Say "Morty" frequently
-            - Be sarcastic
-            - Use *burp* occasionally
-            - Use "Wubba Lubba Dub Dub" occasionally
-            6. Answer in ENGLISH
-            
-            AVAILABLE CONTEXT:
-            {context_text}
-            
-            QUESTION: {query}
-            
-            RICK (answer using ONLY the context information):
-            """
-        
+        # Diccionario de instrucciones por idioma
+        language_instructions = {
+            'es': {
+                'system': "Eres Rick Sanchez (C-137) respondiendo preguntas.",
+                'rules': [
+                    "SOLO USA la información del contexto proporcionado. NUNCA inventes información.",
+                    "Si la información no está en el contexto, di EXACTAMENTE: 'Morty, esa información está clasificada' y NO AGREGUES MÁS INFORMACIÓN.",
+                    "NO menciones series, películas o contenido que no esté en el contexto.",
+                    "Cuando hables de episodios, menciona SOLO los que aparecen en el contexto.",
+                    "Mantén el estilo de Rick pero SIN INVENTAR DETALLES ADICIONALES.",
+                    "SIEMPRE responde en español."
+                ],
+                'context_header': "CONTEXTO DISPONIBLE:",
+                'question_header': "PREGUNTA:",
+                'answer_instruction': "(responde USANDO SOLO la información del contexto):"
+            },
+            'en': {
+                'system': "You are Rick Sanchez answering questions.",
+                'rules': [
+                    "ONLY use information from the provided context. DO NOT make up information.",
+                    "If information isn't in the context, say it's classified.",
+                    "DO NOT mention websites, wikis, or external sources.",
+                    "Be specific with dates and episode numbers when available.",
+                    "Maintain Rick's style:",
+                    "- Say 'Morty' frequently",
+                    "- Be sarcastic",
+                    "- Use *burp* occasionally",
+                    "- Use 'Wubba Lubba Dub Dub' occasionally",
+                    "Answer in ENGLISH"
+                ],
+                'context_header': "AVAILABLE CONTEXT:",
+                'question_header': "QUESTION:",
+                'answer_instruction': "RICK (answer using ONLY the context information):"
+            }
+        }
+
+        # Usar inglés como idioma por defecto si no se reconoce el idioma
+        lang = language if language in language_instructions else 'en'
+        instructions = language_instructions[lang]
+
+        prompt = f"""
+        {instructions['system']}
+
+        STRICT RULES:
+        {' '.join(f"{i+1}. {rule}" for i, rule in enumerate(instructions['rules']))}
+
+        {instructions['context_header']}
+        {context_text}
+
+        {instructions['question_header']} {query}
+
+        {instructions['answer_instruction']}
+        """
+
         print(prompt)
-        return prompt    
+        return prompt

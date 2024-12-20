@@ -2,6 +2,8 @@ import chromadb
 from chromadb.utils import embedding_functions
 from typing import List, Dict
 import os
+import re
+import traceback
 
 class Retriever:
     """
@@ -33,8 +35,9 @@ class Retriever:
             print(f"Colección obtenida/creada exitosamente. Documentos: {doc_count}")
         except Exception as e:
             print(f"Error al obtener/crear colección: {str(e)}")
+            print(f"Tipo de error: {type(e)}")
+            print(f"Traceback completo: {traceback.format_exc()}")
             raise
-
 
     def add_documents(self, documents: List[Dict]):
         """
@@ -55,11 +58,35 @@ class Retriever:
             batch = documents[i:i + batch_size]
             print(f"Procesando lote {i//batch_size + 1} de {len(documents)//batch_size + 1}")
             
+            # Verificar conexión con ChromaDB
+            print("Verificando conexión con ChromaDB...")
+            try:
+                self.collection.count()
+                print("Conexión con ChromaDB activa")
+            except Exception as e:
+                print(f"Error de conexión con ChromaDB: {str(e)}")
+                print(f"Tipo de error: {type(e)}")
+                print(f"Traceback completo: {traceback.format_exc()}")
+                raise
+
             ids = [doc['id'] for doc in batch]
             texts = [doc['text'] for doc in batch]
             metadatas = [doc['metadata'] for doc in batch]
             
+            # Verificar tamaño de los documentos
+            for doc in batch:
+                if len(doc['text']) > 10000:
+                    print(f"Documento muy grande: {doc['id']}, longitud: {len(doc['text'])}")
+            
+            print(f"IDs: {ids}")
+            print(f"Textos: {[text[:100] + '...' for text in texts]}")  # Mostrar solo los primeros 100 caracteres
+            print(f"Metadatas: {metadatas}")
+            
             try:
+                print(f"Iniciando adición del lote {i//batch_size + 1}")
+                print(f"IDs: {ids}")
+                print(f"Textos: {[text[:100] + '...' for text in texts]}")
+                print(f"Metadatas: {metadatas}")
                 self.collection.add(
                     ids=ids,
                     documents=texts,
@@ -68,6 +95,8 @@ class Retriever:
                 print(f"Lote {i//batch_size + 1} añadido exitosamente")
             except Exception as e:
                 print(f"Error añadiendo lote: {str(e)}")
+                print(f"Tipo de error: {type(e)}")
+                print(f"Traceback completo: {traceback.format_exc()}")
                 raise
 
     def count_documents(self):
@@ -90,6 +119,8 @@ class Retriever:
             return self.collection.get()
         except Exception as e:
             print(f"Error obteniendo documentos: {str(e)}")
+            print(f"Tipo de error: {type(e)}")
+            print(f"Traceback completo: {traceback.format_exc()}")
             return None
             
     def search(self, query: str, n_results: int = 5):
@@ -98,7 +129,7 @@ class Retriever:
         """
         try:
             # Detectar si la consulta es sobre una temporada específica
-            import re
+
             season_match = re.search(r'temporada (\d+)', query.lower())
             season = f"S{int(season_match.group(1)):02d}" if season_match else None
 
@@ -128,6 +159,12 @@ class Retriever:
                 where={"type": "character"}
             )
             
+            transcription_results = self.collection.query(
+                query_texts=[query],
+                n_results=n_results,
+                where={"type": "episode"}
+            )
+            
             # Combinar resultados
             combined_docs = []
             combined_meta = []
@@ -135,7 +172,9 @@ class Retriever:
             if episode_results['documents'][0]:
                 combined_docs.extend(episode_results['documents'][0])
                 combined_meta.extend(episode_results['metadatas'][0])
-                
+                combined_docs.extend(transcription_results['documents'][0])
+                combined_meta.extend(transcription_results['metadatas'][0])
+    
             if character_results['documents'][0]:
                 combined_docs.extend(character_results['documents'][0])
                 combined_meta.extend(character_results['metadatas'][0])
@@ -152,4 +191,6 @@ class Retriever:
                 
         except Exception as e:
             print(f"Error en búsqueda: {str(e)}")
+            print(f"Tipo de error: {type(e)}")
+            print(f"Traceback completo: {traceback.format_exc()}")
             return {"documents": [[]], "metadatas": [[]]}
