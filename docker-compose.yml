@@ -54,6 +54,15 @@ services:
     networks:
       - rick_morty_net
 
+#  frontend:
+#    image: rick-morty-front:latest 
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - app
+#    networks:
+#      - rick_morty_net
+
 networks:
   rick_morty_net:
     driver: bridge

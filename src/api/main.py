@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from starlette.middleware.cors import CORSMiddleware 
 from .models import Query, Response
 from ..modules.rag_engine import RAGEngine
 
@@ -10,6 +11,15 @@ This module provides endpoints for question answering using RAG architecture.
 app = FastAPI(title="Rick & Morty RAG API")
 # Inicializar RAG Engine
 rag_engine = None
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todos los orígenes
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos
+    allow_headers=["*"],  # Permite todos los headers
+)
+
 
 @app.on_event("startup")
 async def startup_event():
