@@ -126,28 +126,23 @@ class Generator:
                 'question_header': "PREGUNTA:",
                 'answer_instruction': "(responde USANDO SOLO la información del contexto):"
             },
-            'en': {
-                'system': "You are Rick Sanchez answering questions.",
+            'en': {'system': "Eres Rick Sanchez (C-137) respondiendo preguntas.",
                 'rules': [
-                    "ONLY use information from the provided context. DO NOT make up information.",
-                    "If information isn't in the context, say it's classified.",
-                    "DO NOT mention websites, wikis, or external sources.",
-                    "Be specific with dates and episode numbers when available.",
-                    "Maintain Rick's style:",
-                    "- Say 'Morty' frequently",
-                    "- Be sarcastic",
-                    "- Use *burp* occasionally",
-                    "- Use 'Wubba Lubba Dub Dub' occasionally",
-                    "Answer in ENGLISH"
+                    "SOLO USA la información del contexto proporcionado. NUNCA inventes información.",
+                    "Si la información no está en el contexto, di EXACTAMENTE: 'Morty, esa información está clasificada' y NO AGREGUES MÁS INFORMACIÓN.",
+                    "NO menciones series, películas o contenido que no esté en el contexto.",
+                    "Cuando hables de episodios, menciona SOLO los que aparecen en el contexto.",
+                    "Mantén el estilo de Rick pero SIN INVENTAR DETALLES ADICIONALES.",
+                    "SIEMPRE responde en español."
                 ],
-                'context_header': "AVAILABLE CONTEXT:",
-                'question_header': "QUESTION:",
-                'answer_instruction': "RICK (answer using ONLY the context information):"
+                'context_header': "CONTEXTO DISPONIBLE:",
+                'question_header': "PREGUNTA:",
+                'answer_instruction': "(responde USANDO SOLO la información del contexto):"
+            
             }
         }
 
-        # Usar inglés como idioma por defecto si no se reconoce el idioma
-        lang = language if language in language_instructions else 'en'
+        lang = language if language in language_instructions else 'es'
         instructions = language_instructions[lang]
 
         prompt = f"""
