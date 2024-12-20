@@ -1,7 +1,10 @@
 from typing import List, Dict
 import cohere
+from src.api.models import ConversationManager
 from ..config.settings import get_settings
 from langdetect import detect
+import uuid
+import hashlib
 
 settings = get_settings()
 
@@ -16,8 +19,10 @@ class Generator:
         """
         self.co = cohere.Client(settings.COHERE_API_KEY)
         self.model = settings.MODEL_NAME
+        self.conversation_manager = ConversationManager()
+        self.response_cache = {}
 
-    def generate_response(self, query: str, context: List[Dict]) -> str:
+    def generate_response(self, query: str, context: List[Dict], conversation_id: str = None) -> tuple:
         """
         Genera una respuesta a una consulta usando el contexto proporcionado.
         
@@ -26,29 +31,53 @@ class Generator:
         @return: Respuesta generada en el estilo de Rick
         """
         try:
-            # Detectar idioma de la consulta
-            input_language = detect(query)
-            print(f"Idioma detectado: {input_language}")
+            if conversation_id is None:
+                conversation_id = str(uuid.uuid4())
+
+            self.conversation_manager.add_message(conversation_id, 'user', query)
             
-            # Preparar el prompt con el contexto
-            prompt = self._prepare_prompt(query, context, input_language)
+            query_hash = hashlib.md5(query.encode()).hexdigest()
+
+            if query_hash in self.response_cache:
+                response_text = self.response_cache[query_hash]
+                print(f"Respuesta en cache: {response_text}")
+            else:    
+                # Detectar idioma de la consulta
+                input_language = detect(query)
+                print(f"Idioma detectado: {input_language}")
+                
+                # Preparar el prompt con el contexto
+                prompt = self._prepare_prompt(query, context, input_language)
+                
+                # Generar la respuesta
+                response = self.co.generate(
+                    model=self.model,
+                    prompt=prompt,
+                    max_tokens=300,
+                    temperature=0.7,
+                    k=0,
+                    stop_sequences=[],
+                    return_likelihoods="NONE"
+                )
+                response_text = response.generations[0].text
+                
+                # Guardar la respuesta en la cache
+                self.response_cache[query_hash] = response_text
             
-            # Generar la respuesta
-            response = self.co.generate(
-                model=self.model,
-                prompt=prompt,
-                max_tokens=300,
-                temperature=0.7,
-                k=0,
-                stop_sequences=[],
-                return_likelihoods="NONE"
-            )
-            print(f"Respuesta: {response.generations[0].text}")
-            return response.generations[0].text
+            # Imprimir la respuesta
+            print(f"Respuesta: {response_text}")
+        
+            # Guardar la respuesta en la conversación
+            self.conversation_manager.add_message(conversation_id, 'assistant', response_text)
+            
+            # Devolver la respuesta
+            return response_text, conversation_id
                 
         except Exception as e:
             print(f"Error en la generación: {e}")
-            return "¡Wubba Lubba Dub Dub! Algo salió mal, Morty!" if input_language == 'es' else "Wubba Lubba Dub Dub! Something went wrong, Morty!"
+            error_message = "¡Wubba Lubba Dub Dub! Algo salió mal, Morty!" if 'input_language' in locals() and input_language == 'es' else "Wubba Lubba Dub Dub! Something went wrong, Morty!"
+            self.conversation_manager.add_message(conversation_id, 'assistant', error_message)
+            return error_message, conversation_id
         
     def _prepare_prompt(self, query: str, context: List[Dict], language: str) -> str:
         """
@@ -137,3 +166,6 @@ class Generator:
 
         print(prompt)
         return prompt
+
+    def get_conversation_history(self, conversation_id: str):
+        return self.conversation_manager.get_conversation(conversation_id)

@@ -16,7 +16,7 @@ class RAGEngine:
         self.generator = Generator()
         print(f"RAG Engine inicializado. Documentos en la colección: {self.retriever.count_documents()}")
 
-    async def process_query(self, question: str) -> Dict:
+    async def process_query(self, question: str, conversation_id: str = None) -> Dict:
         """
         Processes a question using RAG architecture.
         
@@ -32,16 +32,17 @@ class RAGEngine:
         context = self._prepare_context(results)
         
         # Generar respuesta
-        response = self.generator.generate_response(question, context)
-        
+        response, conversation_id = self.generator.generate_response(question, context, conversation_id)
+         
         # Preparar fuentes
         sources = self._prepare_sources(results)
         
         return {
             "answer": response,
             "confidence": self._calculate_confidence(results),
-            "sources": sources,
-            "context_used": str(context)[:200] + "..." if context else None
+            "sources": self._prepare_sources(results),
+            "context_used": str(context)[:200] + "..." if context else None,
+            "conversation_id": conversation_id
         }
     def _prepare_context(self, results) -> List[Dict]:
         """
@@ -116,3 +117,5 @@ class RAGEngine:
         final_score = (doc_score * 0.4 + diversity_score * 0.3 + length_score * 0.3)
         
         return round(final_score, 2)    
+    def get_conversation_history(self, conversation_id: str):
+        return self.generator.get_conversation_history(conversation_id)
